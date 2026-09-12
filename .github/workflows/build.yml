@@ -26,23 +26,17 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Global CLI Tools
-        run: npm install -g @expo/cli
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
 
-      - name: Install Project Dependencies
+      - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Prebuild Native Android Code
-        run: npx expo prebuild --platform android --clean --no-install
-
-      - name: Build Standalone APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx3072m"
+      - name: Build Standalone APK with EAS Local
+        run: eas build --platform android --profile preview --local --non-interactive
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FarLove-App
-          path: android/app/build/outputs/apk/**/*.apk
+          path: "*.apk"
