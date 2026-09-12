@@ -1,40 +1,17 @@
 {
   "name": "farlove",
   "version": "1.0.0",
-  "main": "index.ts",
-  "dependencies": {
-    "@expo/metro-runtime": "~57.0.12",
-    "@expo/vector-icons": "^15.1.1",
-    "@react-native-async-storage/async-storage": "^3.1.1",
-    "@react-navigation/native": "^7.3.17",
-    "@react-navigation/native-stack": "^7.18.9",
-    "expo": "~57.0.15",
-    "expo-asset": "^57.0.13",
-    "expo-constants": "^57.0.13",
-    "expo-font": "~57.0.4",
-    "expo-image": "^57.0.3",
-    "expo-secure-store": "^57.0.1",
-    "expo-status-bar": "~57.0.1",
-    "expo-updates": "~57.0.22",
-    "firebase": "^12.19.0",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-native": "0.86.2",
-    "react-native-gesture-handler": "^3.2.1",
-    "react-native-reanimated": "^4.6.0",
-    "react-native-safe-area-context": "^5.9.1",
-    "react-native-screens": "^4.27.0",
-    "react-native-web": "^0.21.2"
-  },
-  "devDependencies": {
-    "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
-  },
+  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "android": "expo run:android"
   },
-  "private": true
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "1.18.2",
+    "expo": "^49.0.0",
+    "expo-status-bar": "~1.6.0",
+    "firebase": "^10.7.1",
+    "react": "18.2.0",
+    "react-native": "0.72.6"
+  }
 }
