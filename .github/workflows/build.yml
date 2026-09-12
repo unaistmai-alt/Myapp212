@@ -26,13 +26,20 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Dependencies
+      - name: Install Global CLI Tools
+        run: npm install -g @expo/cli
+
+      - name: Install Project Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build Android APK
+      - name: Prebuild Native Android Code
+        run: npx expo prebuild --platform android --clean --no-install
+
+      - name: Build Standalone APK
         run: |
-          npx expo run:android --no-install --variant release || true
-          cd android && ./gradlew assembleRelease --no-daemon
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx3072m"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
