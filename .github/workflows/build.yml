@@ -26,17 +26,20 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
-
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build Standalone APK with EAS Local
-        run: eas build --platform android --profile preview --local --non-interactive
+      - name: Generate Native Android Project
+        run: npx expo prebuild --platform android --clean --no-install
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FarLove-App
-          path: "*.apk"
+          path: android/app/build/outputs/apk/debug/*.apk
