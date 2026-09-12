@@ -29,8 +29,10 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Generate Native Android Project
-        run: npx expo prebuild --platform android --clean --no-install
+      - name: Clean & Regenerate Android Directory
+        run: |
+          rm -rf android
+          npx expo prebuild --platform android --clean --no-install
 
       - name: Build APK
         run: |
