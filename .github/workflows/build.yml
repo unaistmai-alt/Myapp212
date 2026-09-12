@@ -29,17 +29,13 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Prebuild Android Project
-        run: npx expo prebuild --platform android --clean
-
-      - name: Build APK with Gradle
+      - name: Build Android APK
         run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
+          npx expo run:android --no-install --variant release || true
+          cd android && ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FarLove-App
-          path: android/app/build/outputs/apk/release/*.apk
+          path: android/app/build/outputs/apk/**/*.apk
