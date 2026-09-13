@@ -41,11 +41,19 @@ jobs:
       - name: Generate Android Native Project
         run: npx expo prebuild --platform android --clean
 
-      - name: Inject Gradle SDK Versions and Paths
+      - name: Fix Gradle Build Files
         run: |
+          # 1. Provide compileSdkVersion in root build.gradle
           sed -i '/buildscript {/a \    ext {\n        compileSdkVersion = 34\n        targetSdkVersion = 34\n        minSdkVersion = 21\n        buildToolsVersion = "34.0.0"\n    }' android/build.gradle
+
+          # 2. Hardcode compileSdkVersion in app/build.gradle to bypass null checks
+          sed -i 's/compileSdkVersion rootProject.ext.compileSdkVersion/compileSdkVersion 34/' android/app/build.gradle || true
+          sed -i 's/targetSdkVersion rootProject.ext.targetSdkVersion/targetSdkVersion 34/' android/app/build.gradle || true
+
+          # 3. Add explicit React root path and Node binary to gradle.properties
           NODE_PATH=$(which node)
           echo "NODE_BINARY=$NODE_PATH" >> android/gradle.properties
+          echo "REACT_NATIVE_NODE_MODULES_DIR=$GITHUB_WORKSPACE/node_modules/react-native" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
 
