@@ -17,33 +17,14 @@ jobs:
         with:
           node-version: 18
 
-      - name: Setup Java
-        uses: actions/setup-java@v3
+      - name: Setup EAS CLI
+        uses: expo/expo-github-action@v8
         with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install Dependencies
-        run: |
-          npm install --legacy-peer-deps
-          npm install -g expo-cli
+        run: npm install --legacy-peer-deps
 
-      - name: Prebuild Native Code
-        run: |
-          rm -rf android
-          npx expo prebuild --platform android --clean
-
-      - name: Build Debug APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon -x lint -x test
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: FarLove-App
-          path: android/app/build/outputs/apk/debug/*.apk
+      - name: Build APK on Expo Cloud
+        run: eas build --platform android --profile preview --non-interactive
