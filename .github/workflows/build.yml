@@ -23,9 +23,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Clean Old Native Android Folder
+      - name: Remove Old Native Folders
         run: |
           rm -rf android ios
+          # Ensure git ignores any generated native folders
+          echo -e "\nandroid/\nios/" >> .gitignore
+
+      - name: Create Placeholder Assets
+        run: |
+          mkdir -p assets
+          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAA=" | base64 -d > assets/icon.png
+          cp assets/icon.png assets/splash.png
+          cp assets/icon.png assets/adaptive-icon.png
 
       - name: Install EAS CLI
         run: npm install -g eas-cli
@@ -35,7 +44,7 @@ jobs:
 
       - name: Generate Local Keystore and Credentials
         run: |
-          keytool -genkeypair -v -storetype PKCS12 -keystore release.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=MyApp, OU=Mobile, O=App, L=Doha, S=Doha, C=QA"
+          keytool -genkeypair -v -storetype PKCS12 -keystore release.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=FarLove, OU=Mobile, O=App, L=Doha, S=Doha, C=QA"
           cat << 'EOF' > credentials.json
           {
             "android": {
@@ -53,5 +62,4 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          npx eas-cli project:init --force
-          eas build --platform android --profile preview --non-interactive --no-wait
+          eas build --platform android --profile preview --non-interactive --no-wait --clear-cache
