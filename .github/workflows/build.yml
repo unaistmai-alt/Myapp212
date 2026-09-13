@@ -28,13 +28,6 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Create Placeholder Assets
-        run: |
-          mkdir -p assets
-          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAA=" | base64 -d > assets/icon.png
-          cp assets/icon.png assets/splash.png
-          cp assets/icon.png assets/adaptive-icon.png
-
       - name: Install dependencies & Metro Bundler
         run: |
           npm install --legacy-peer-deps
