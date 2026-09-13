@@ -1,22 +1,33 @@
+
 {
   "expo": {
     "name": "FarLove",
     "slug": "farlove",
+    "owner": "shinams743",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./logo.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./logo.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FAF9F6"
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
     },
     "android": {
-      "package": "com.unais.farlove",
       "adaptiveIcon": {
-        "foregroundImage": "./logo.png",
-        "backgroundColor": "#FAF9F6"
-      }
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.shinams743.farlove"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     }
   }
 }
