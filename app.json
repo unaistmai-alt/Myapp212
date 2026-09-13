@@ -1,37 +1,28 @@
 {
   "expo": {
-    "name": "myapp212-",
-    "slug": "myapp212-",
-    "owner": "shinams743",
+    "name": "FarLove",
+    "slug": "myapp212",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.shinams743.myapp212"
+      "package": "com.farlove.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": ""
     },
     "extra": {
       "eas": {
-        "projectId": "01bb5375-8fcd-40a8-9ae2-cb78eeb0bfae"
+        "projectId": "8b9e6e8e-8a0a-4221-8260-15579f187ee3"
       }
     }
   }
 }
+
