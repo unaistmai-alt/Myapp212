@@ -2,6 +2,7 @@
   "expo": {
     "name": "FarLove",
     "slug": "myapp212",
+    "owner": "shinasv743",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -17,12 +18,6 @@
     },
     "web": {
       "favicon": ""
-    },
-    "extra": {
-      "eas": {
-        "projectId": "8b9e6e8e-8a0a-4221-8260-15579f187ee3"
-      }
     }
   }
 }
-
