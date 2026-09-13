@@ -14,16 +14,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 18
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -38,17 +38,29 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Prebuild Android
-        run: npx @expo/cli prebuild --platform android --clean
+      - name: Generate Clean Native Android Project
+        run: |
+          npx expo prebuild --platform android --clean --no-install
 
-      - name: Build APK with Gradle
+      - name: Fix React Native Path & Android SDK Config
+        run: |
+          # 1. Provide exact node binary path
+          echo "NODE_BINARY=$(which node)" >> android/gradle.properties
+          
+          # 2. Fix the line 14 issue by pointing directly to the root react-native directory
+          sed -i 's|.*react.root = .*|    react.root = file("../../")|' android/app/build.gradle || true
+          
+          # 3. Ensure compileSdkVersion is strictly defined in app/build.gradle
+          sed -i 's/compileSdkVersion rootProject.ext.compileSdkVersion/compileSdkVersion 34/' android/app/build.gradle || true
+          sed -i 's/targetSdkVersion rootProject.ext.targetSdkVersion/targetSdkVersion 34/' android/app/build.gradle || true
+
+      - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          export NODE_BINARY=$(which node)
-          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m"
+          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx3072m"
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FarLove-APK
