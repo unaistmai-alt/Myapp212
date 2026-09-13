@@ -41,15 +41,13 @@ jobs:
       - name: Generate Android Native Project
         run: npx expo prebuild --platform android --clean
 
-      - name: Fix Node and Gradle Paths
+      - name: Inject Gradle SDK Versions and Paths
         run: |
-          # Pass explicit node path to gradle
+          sed -i '/buildscript {/a \    ext {\n        compileSdkVersion = 34\n        targetSdkVersion = 34\n        minSdkVersion = 21\n        buildToolsVersion = "34.0.0"\n    }' android/build.gradle
           NODE_PATH=$(which node)
           echo "NODE_BINARY=$NODE_PATH" >> android/gradle.properties
-          
-          # Fix compileSdkVersion in root build.gradle
-          sed -i 's/compileSdkVersion = .*/compileSdkVersion = 34/' android/build.gradle || true
-          sed -i 's/targetSdkVersion = .*/targetSdkVersion = 34/' android/build.gradle || true
+          echo "android.useAndroidX=true" >> android/gradle.properties
+          echo "android.enableJetifier=true" >> android/gradle.properties
 
       - name: Build Android APK
         run: |
