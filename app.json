@@ -15,6 +15,11 @@
     },
     "android": {
       "package": "com.farlove.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "33a67256-ff7d-4df4-8d4b-7fe88f28854c"
+      }
     }
   }
 }
