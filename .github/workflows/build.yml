@@ -23,6 +23,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Clean Old Native Android Folder
+        run: |
+          rm -rf android ios
+
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
@@ -49,5 +53,4 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          eas init --account shinams743 --non-interactive || true
-          eas build --platform android --profile preview --non-interactive --no-wait
+          eas build --platform android --profile preview --non-interactive --no-wait --clear-cache
