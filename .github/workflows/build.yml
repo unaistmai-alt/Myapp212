@@ -35,13 +35,38 @@ jobs:
           cp assets/icon.png assets/splash.png
           cp assets/icon.png assets/adaptive-icon.png
 
-      - name: Install dependencies and missing build plugins
-        run: |
-          npm install --legacy-peer-deps
-          npm install --save-dev @react-native/gradle-plugin@^0.72.0 --legacy-peer-deps
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
       - name: Prebuild Android Native
         run: npx expo prebuild --platform android --clean
+
+      - name: Bypass Line 14 and Patch Gradle
+        run: |
+          # 1. Provide rootProject extra properties so compileSdkVersion is never null
+          cat << 'EOF' > android/build.gradle.patch
+          buildscript {
+              ext {
+                  buildToolsVersion = "34.0.0"
+                  minSdkVersion = 21
+                  compileSdkVersion = 34
+                  targetSdkVersion = 34
+              }
+          EOF
+
+          # 2. Hardcode compileSdkVersion & targetSdkVersion in app/build.gradle
+          sed -i 's/compileSdkVersion rootProject.ext.compileSdkVersion/compileSdkVersion 34/' android/app/build.gradle || true
+          sed -i 's/targetSdkVersion rootProject.ext.targetSdkVersion/targetSdkVersion 34/' android/app/build.gradle || true
+
+          # 3. Fix line 14: Replace dynamic node require of react-native with direct file path
+          RN_DIR="$GITHUB_WORKSPACE/node_modules/react-native"
+          sed -i "s|.*react.root = .*|    react.root = file(\"$RN_DIR\")|" android/app/build.gradle || true
+          sed -i "s|.*react-native/package.json.*|    return file(\"$RN_DIR\")|" android/app/build.gradle || true
+
+          # 4. Set Node Path in gradle.properties
+          echo "NODE_BINARY=$(which node)" >> android/gradle.properties
+          echo "android.useAndroidX=true" >> android/gradle.properties
+          echo "android.enableJetifier=true" >> android/gradle.properties
 
       - name: Build Android APK
         run: |
