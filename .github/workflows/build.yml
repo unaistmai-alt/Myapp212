@@ -41,8 +41,13 @@ jobs:
       - name: Generate Android Native Project
         run: npx expo prebuild --platform android --clean
 
-      - name: Fix SDK versions in android/build.gradle
+      - name: Fix Node and Gradle Paths
         run: |
+          # Pass explicit node path to gradle
+          NODE_PATH=$(which node)
+          echo "NODE_BINARY=$NODE_PATH" >> android/gradle.properties
+          
+          # Fix compileSdkVersion in root build.gradle
           sed -i 's/compileSdkVersion = .*/compileSdkVersion = 34/' android/build.gradle || true
           sed -i 's/targetSdkVersion = .*/targetSdkVersion = 34/' android/build.gradle || true
 
@@ -50,7 +55,7 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
