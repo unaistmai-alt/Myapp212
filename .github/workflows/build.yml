@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 18
         uses: actions/setup-node@v4
         with:
           node-version: 18
@@ -35,24 +35,13 @@ jobs:
           cp assets/icon.png assets/splash.png
           cp assets/icon.png assets/adaptive-icon.png
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Generate Clean Native Android Project
+      - name: Install dependencies and missing build plugins
         run: |
-          npx expo prebuild --platform android --clean --no-install
+          npm install --legacy-peer-deps
+          npm install --save-dev @react-native/gradle-plugin@^0.72.0 --legacy-peer-deps
 
-      - name: Fix React Native Path & Android SDK Config
-        run: |
-          # 1. Provide exact node binary path
-          echo "NODE_BINARY=$(which node)" >> android/gradle.properties
-          
-          # 2. Fix the line 14 issue by pointing directly to the root react-native directory
-          sed -i 's|.*react.root = .*|    react.root = file("../../")|' android/app/build.gradle || true
-          
-          # 3. Ensure compileSdkVersion is strictly defined in app/build.gradle
-          sed -i 's/compileSdkVersion rootProject.ext.compileSdkVersion/compileSdkVersion 34/' android/app/build.gradle || true
-          sed -i 's/targetSdkVersion rootProject.ext.targetSdkVersion/targetSdkVersion 34/' android/app/build.gradle || true
+      - name: Prebuild Android Native
+        run: npx expo prebuild --platform android --clean
 
       - name: Build Android APK
         run: |
