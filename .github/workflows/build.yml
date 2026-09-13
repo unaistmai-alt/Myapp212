@@ -14,16 +14,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 18
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
 
-      - name: Setup Java
+      - name: Setup Java 11
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '11'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -38,33 +38,18 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Generate Android Native Project
-        run: npx expo prebuild --platform android --clean
+      - name: Prebuild Android
+        run: npx @expo/cli prebuild --platform android --clean
 
-      - name: Fix Gradle Build Files
-        run: |
-          # 1. Provide compileSdkVersion in root build.gradle
-          sed -i '/buildscript {/a \    ext {\n        compileSdkVersion = 34\n        targetSdkVersion = 34\n        minSdkVersion = 21\n        buildToolsVersion = "34.0.0"\n    }' android/build.gradle
-
-          # 2. Hardcode compileSdkVersion in app/build.gradle to bypass null checks
-          sed -i 's/compileSdkVersion rootProject.ext.compileSdkVersion/compileSdkVersion 34/' android/app/build.gradle || true
-          sed -i 's/targetSdkVersion rootProject.ext.targetSdkVersion/targetSdkVersion 34/' android/app/build.gradle || true
-
-          # 3. Add explicit React root path and Node binary to gradle.properties
-          NODE_PATH=$(which node)
-          echo "NODE_BINARY=$NODE_PATH" >> android/gradle.properties
-          echo "REACT_NATIVE_NODE_MODULES_DIR=$GITHUB_WORKSPACE/node_modules/react-native" >> android/gradle.properties
-          echo "android.useAndroidX=true" >> android/gradle.properties
-          echo "android.enableJetifier=true" >> android/gradle.properties
-
-      - name: Build Android APK
+      - name: Build APK with Gradle
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
+          export NODE_BINARY=$(which node)
+          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FarLove-Release-APK
+          name: FarLove-APK
           path: android/app/build/outputs/apk/release/*.apk
