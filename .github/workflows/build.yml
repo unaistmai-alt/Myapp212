@@ -52,7 +52,7 @@ jobs:
           sed -i "s|.*react.root = .*|    react.root = file(\"$RN_DIR\")|" android/app/build.gradle || true
           sed -i "s|.*react-native/package.json.*|    return file(\"$RN_DIR\")|" android/app/build.gradle || true
 
-          # 3. Add bundleInRelease = false so Gradle skips failing metro step
+          # 3. Disable automated bundle task in Gradle
           sed -i '/project.ext.react = \[/a \    bundleInRelease: false,' android/app/build.gradle || true
 
           # 4. Set gradle properties
@@ -60,10 +60,10 @@ jobs:
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
 
-      - name: Manually Pre-bundle JavaScript & Assets
+      - name: Pre-bundle JavaScript via Expo CLI
         run: |
           mkdir -p android/app/src/main/assets
-          npx react-native bundle \
+          npx expo export:embed \
             --platform android \
             --dev false \
             --entry-file node_modules/expo/AppEntry.js \
