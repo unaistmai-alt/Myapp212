@@ -17,13 +17,22 @@ jobs:
         with:
           node-version: 18
 
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build APK on Expo Cloud
+      - name: Setup Credentials and Build APK
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: yes | eas build --platform android --profile preview --no-wait
+        run: |
+          keytool -genkeypair -v -storetype PKCS12 -keystore release.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=MyApp, OU=Mobile, O=App, L=Doha, S=Doha, C=QA"
+          npx eas-cli credentials -p android --non-interactive || true
+          eas build --platform android --profile preview --non-interactive --no-wait
