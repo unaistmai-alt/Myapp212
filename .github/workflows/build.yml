@@ -26,6 +26,4 @@ jobs:
       - name: Build APK on Expo Cloud
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: |
-          npx eas-cli project:init --force
-          npx eas-cli build --platform android --profile preview --non-interactive
+        run: eas build --platform android --profile preview --non-interactive --no-wait
