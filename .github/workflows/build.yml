@@ -29,10 +29,23 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Setup Credentials and Build APK
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      - name: Generate Local Keystore and Credentials
         run: |
           keytool -genkeypair -v -storetype PKCS12 -keystore release.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=MyApp, OU=Mobile, O=App, L=Doha, S=Doha, C=QA"
-          npx eas-cli credentials -p android --non-interactive || true
-          eas build --platform android --profile preview --non-interactive --no-wait
+          cat << 'EOF' > credentials.json
+          {
+            "android": {
+              "keystore": {
+                "keystorePath": "release.keystore",
+                "keystorePassword": "123456",
+                "keyAlias": "my-key-alias",
+                "keyPassword": "123456"
+              }
+            }
+          }
+          EOF
+
+      - name: Build APK on Expo Cloud
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: eas build --platform android --profile preview --non-interactive --no-wait
