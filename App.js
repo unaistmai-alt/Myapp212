@@ -16,6 +16,8 @@ import {
   StatusBar
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Slider from '@react-native-community/slider';
+import { Audio } from 'expo-av';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import {
@@ -106,6 +108,14 @@ export default function App() {
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef(null);
 
+  // മ്യൂസിക് പ്ലെയർ സ്റ്റേറ്റുകൾ
+  const [sound, setSound] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [position, setPosition] = useState(6000);
+  const [duration, setDuration] = useState(60000);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
+
   useEffect(() => {
     let unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -125,6 +135,65 @@ export default function App() {
 
     return () => unsubscribeAuth();
   }, []);
+
+  // മ്യൂസിക് പ്ലെയർ ലോഡ് ചെയ്യൽ
+  useEffect(() => {
+    let soundObj = new Audio.Sound();
+    async function loadAudio() {
+      try {
+        await soundObj.loadAsync(
+          { uri: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }, // നിങ്ങൾക്കിഷ്ടമുള്ള പാട്ടിന്റെ URL ഇവിടെ നൽകാം
+          { shouldPlay: false },
+          onPlaybackStatusUpdate
+        );
+        setSound(soundObj);
+      } catch (e) {
+        console.log("Audio load error:", e);
+      }
+    }
+    loadAudio();
+
+    return () => {
+      soundObj.unloadAsync();
+    };
+  }, []);
+
+  const onPlaybackStatusUpdate = (status) => {
+    if (status.isLoaded) {
+      setPosition(status.positionMillis);
+      setDuration(status.durationMillis || 60000);
+      setIsPlaying(status.isPlaying);
+    }
+  };
+
+  const togglePlayPause = async () => {
+    if (!sound) return;
+    if (isPlaying) {
+      await sound.pauseAsync();
+    } else {
+      await sound.playAsync();
+    }
+  };
+
+  const toggleLoop = async () => {
+    if (!sound) return;
+    const nextState = !isLooping;
+    setIsLooping(nextState);
+    await sound.setIsLoopingAsync(nextState);
+  };
+
+  const handleSlidingComplete = async (value) => {
+    if (sound) {
+      await sound.setPositionAsync(value);
+    }
+  };
+
+  const formatTime = (millis) => {
+    const totalSeconds = Math.floor(millis / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
 
   const checkPersistedSession = async (uid) => {
     try {
@@ -331,6 +400,55 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
+        {/* നിങ്ങളുടെ സ്ക്രീൻഷോട്ടിലുള്ള മിനിമൽ മ്യൂസിക് പ്ലെയർ ബാർ */}
+        <View style={styles.minimalPlayerCard}>
+          <View style={styles.playerTopRow}>
+            <TouchableOpacity onPress={() => setIsLiked(!isLiked)}>
+              <Text style={[styles.playerHeart, { color: isLiked ? '#ef4444' : '#4A2E18' }]}>
+                {isLiked ? '♥' : '🖤'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <Slider
+            style={styles.playerSlider}
+            minimumValue={0}
+            maximumValue={duration}
+            value={position}
+            minimumTrackTintColor="#4A2E18"
+            maximumTrackTintColor="#D1C7BD"
+            thumbTintColor="#4A2E18"
+            onSlidingComplete={handleSlidingComplete}
+          />
+
+          <View style={styles.timeRow}>
+            <Text style={styles.timeText}>{formatTime(position)}</Text>
+            <Text style={styles.timeText}>{formatTime(duration)}</Text>
+          </View>
+
+          <View style={styles.controlsRow}>
+            <TouchableOpacity onPress={toggleLoop}>
+              <Text style={[styles.controlBtnText, isLooping ? styles.activeControl : styles.dimControl]}>🔁</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => sound && sound.setPositionAsync(0)}>
+              <Text style={styles.controlBtnText}>⏮</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.circlePlayBtn} onPress={togglePlayPause}>
+              <Text style={styles.playIconText}>{isPlaying ? '⏸' : '▶'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => sound && sound.setPositionAsync(duration)}>
+              <Text style={styles.controlBtnText}>⏭</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity>
+              <Text style={[styles.controlBtnText, styles.dimControl]}>🔀</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <View style={styles.heartSection}>
           <View style={styles.particleCanvas} pointerEvents="none">
             {floatingHearts.map((heart) => (
@@ -494,15 +612,82 @@ const styles = StyleSheet.create({
     color: '#7D6E65',
     fontWeight: '500'
   },
+
+  /* മ്യൂസിക് പ്ലെയർ സ്റ്റൈൽ */
+  minimalPlayerCard: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    backgroundColor: '#EFEBE4',
+    borderRadius: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  playerTopRow: {
+    width: '100%',
+    alignItems: 'flex-end',
+    paddingRight: 4,
+    marginBottom: -6,
+  },
+  playerHeart: {
+    fontSize: 16,
+  },
+  playerSlider: {
+    width: '100%',
+    height: 25,
+  },
+  timeRow: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+    marginTop: -8,
+  },
+  timeText: {
+    fontSize: 10,
+    color: '#7D6E65',
+    fontWeight: '700',
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '75%',
+    alignSelf: 'center',
+    marginTop: 8,
+  },
+  controlBtnText: {
+    fontSize: 17,
+    color: '#4A2E18',
+  },
+  dimControl: {
+    opacity: 0.35,
+  },
+  activeControl: {
+    opacity: 1,
+  },
+  circlePlayBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#4A2E18',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playIconText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginLeft: 2,
+  },
+
   heartSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 30,
+    paddingVertical: 20,
     position: 'relative'
   },
   particleCanvas: {
     position: 'absolute',
-    top: 30,
+    top: 20,
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -510,11 +695,11 @@ const styles = StyleSheet.create({
     position: 'absolute'
   },
   mainHeart: {
-    fontSize: 72
+    fontSize: 65
   },
   statusLabel: {
-    marginTop: 12,
-    fontSize: 15,
+    marginTop: 10,
+    fontSize: 14,
     fontWeight: '500',
     color: '#7D6E65'
   },
@@ -523,7 +708,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16
   },
   chatContent: {
-    paddingVertical: 10
+    paddingVertical: 8
   },
   messageRow: {
     marginVertical: 4,
