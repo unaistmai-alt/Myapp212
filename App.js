@@ -111,10 +111,11 @@ export default function App() {
   // മ്യൂസിക് പ്ലെയർ സ്റ്റേറ്റുകൾ
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [position, setPosition] = useState(6000);
-  const [duration, setDuration] = useState(60000);
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(1);
   const [isLiked, setIsLiked] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
+  const soundRef = useRef(null);
 
   useEffect(() => {
     let unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
@@ -136,32 +137,41 @@ export default function App() {
     return () => unsubscribeAuth();
   }, []);
 
-  // മ്യൂസിക് പ്ലെയർ ലോഡ് ചെയ്യൽ
+  // Firebase Realtime Database-ൽ നിന്ന് songUrl റിയൽടൈം ആയി എടുക്കുന്ന കോഡ്
   useEffect(() => {
-    let soundObj = new Audio.Sound();
-    async function loadAudio() {
+    const songDbRef = ref(db, 'songUrl');
+    const unsubscribeSong = onValue(songDbRef, async (snapshot) => {
+      const url = snapshot.val();
+      if (!url) return;
+
       try {
-        await soundObj.loadAsync(
-          { uri: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }, // നിങ്ങൾക്കിഷ്ടമുള്ള പാട്ടിന്റെ URL ഇവിടെ നൽകാം
+        if (soundRef.current) {
+          await soundRef.current.unloadAsync();
+        }
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: url },
           { shouldPlay: false },
           onPlaybackStatusUpdate
         );
-        setSound(soundObj);
+        soundRef.current = newSound;
+        setSound(newSound);
       } catch (e) {
-        console.log("Audio load error:", e);
+        console.log("Firebase Audio load error:", e);
       }
-    }
-    loadAudio();
+    });
 
     return () => {
-      soundObj.unloadAsync();
+      unsubscribeSong();
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
     };
   }, []);
 
   const onPlaybackStatusUpdate = (status) => {
     if (status.isLoaded) {
       setPosition(status.positionMillis);
-      setDuration(status.durationMillis || 60000);
+      setDuration(status.durationMillis || 1);
       setIsPlaying(status.isPlaying);
     }
   };
@@ -400,7 +410,7 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
-        {/* നിങ്ങളുടെ സ്ക്രീൻഷോട്ടിലുള്ള മിനിമൽ മ്യൂസിക് പ്ലെയർ ബാർ */}
+        {/* മിനിമൽ മ്യൂസിക് പ്ലെയർ ബാർ */}
         <View style={styles.minimalPlayerCard}>
           <View style={styles.playerTopRow}>
             <TouchableOpacity onPress={() => setIsLiked(!isLiked)}>
@@ -612,8 +622,6 @@ const styles = StyleSheet.create({
     color: '#7D6E65',
     fontWeight: '500'
   },
-
-  /* മ്യൂസിക് പ്ലെയർ സ്റ്റൈൽ */
   minimalPlayerCard: {
     marginHorizontal: 16,
     marginTop: 10,
@@ -678,7 +686,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 2,
   },
-
   heartSection: {
     alignItems: 'center',
     justifyContent: 'center',
