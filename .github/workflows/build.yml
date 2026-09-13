@@ -26,11 +26,39 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Remove Old Native Folders
+        run: |
+          rm -rf android ios
+          echo -e "\nandroid/\nios/" >> .gitignore
+
+      - name: Create Placeholder Assets
+        run: |
+          mkdir -p assets
+          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAA=" | base64 -d > assets/icon.png
+          cp assets/icon.png assets/splash.png
+          cp assets/icon.png assets/adaptive-icon.png
+
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
       - name: Install EAS CLI
         run: npm install -g eas-cli
+
+      - name: Generate Keystore and Credentials
+        run: |
+          keytool -genkeypair -v -storetype PKCS12 -keystore release.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=FarLove, OU=Mobile, O=App, L=Doha, S=Doha, C=QA"
+          cat << 'EOF' > credentials.json
+          {
+            "android": {
+              "keystore": {
+                "keystorePath": "release.keystore",
+                "keystorePassword": "123456",
+                "keyAlias": "my-key-alias",
+                "keyPassword": "123456"
+              }
+            }
+          }
+          EOF
 
       - name: Create EAS configuration
         run: |
@@ -42,6 +70,7 @@ jobs:
             "build": {
               "preview": {
                 "distribution": "internal",
+                "credentialsSource": "local",
                 "android": {
                   "buildType": "apk"
                 }
