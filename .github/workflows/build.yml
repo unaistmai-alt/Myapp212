@@ -2,12 +2,14 @@ name: Build FarLove Android APK
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,50 +18,30 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
-      - name: Remove Old Native Folders
-        run: |
-          rm -rf android ios
-          # Ensure git ignores any generated native folders
-          echo -e "\nandroid/\nios/" >> .gitignore
-
-      - name: Create Placeholder Assets
-        run: |
-          mkdir -p assets
-          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAA=" | base64 -d > assets/icon.png
-          cp assets/icon.png assets/splash.png
-          cp assets/icon.png assets/adaptive-icon.png
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
-      - name: Install Dependencies
-        run: npm install --legacy-peer-deps
+      - name: Check Expo project
+        run: npx expo config --type public
 
-      - name: Generate Local Keystore and Credentials
-        run: |
-          keytool -genkeypair -v -storetype PKCS12 -keystore release.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=FarLove, OU=Mobile, O=App, L=Doha, S=Doha, C=QA"
-          cat << 'EOF' > credentials.json
-          {
-            "android": {
-              "keystore": {
-                "keystorePath": "release.keystore",
-                "keystorePassword": "123456",
-                "keyAlias": "my-key-alias",
-                "keyPassword": "123456"
-              }
-            }
-          }
-          EOF
-
-      - name: Build APK on Expo Cloud
+      - name: Build APK with EAS
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          eas build --platform android --profile preview --non-interactive --no-wait --clear-cache
+          eas build \
+            --platform android \
+            --profile preview \
+            --non-interactive \
+            --no-wait \
+            --clear-cache
