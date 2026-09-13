@@ -17,14 +17,13 @@ jobs:
         with:
           node-version: 18
 
-      - name: Setup EAS CLI
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Install EAS CLI Directly
+        run: npm install -g eas-cli
 
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
       - name: Build APK on Expo Cloud
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas build --platform android --profile preview --non-interactive
