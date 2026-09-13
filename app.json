@@ -1,8 +1,7 @@
-
 {
   "expo": {
-    "name": "FarLove",
-    "slug": "farlove",
+    "name": "myapp212-",
+    "slug": "myapp212-",
     "owner": "shinams743",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -24,10 +23,15 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.shinams743.farlove"
+      "package": "com.shinams743.myapp212"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "01bb5375-8fcd-40a8-9ae2-cb78eeb0bfae"
+      }
     }
   }
 }
