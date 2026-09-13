@@ -86,6 +86,7 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
+          eas init --account shinams743 --non-interactive || true
           eas build \
             --platform android \
             --profile preview \
