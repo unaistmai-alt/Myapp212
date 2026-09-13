@@ -35,6 +35,12 @@ jobs:
       - name: Check Expo project
         run: npx expo config --type public
 
+      - name: Configure EAS project
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas init --account shinams743 --non-interactive
+
       - name: Build APK with EAS
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
