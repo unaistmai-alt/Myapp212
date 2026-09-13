@@ -7,8 +7,10 @@
     "android": "expo run:android"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "1.18.2",
+    "@react-native-async-storage/async-storage": "^1.18.2",
+    "@react-native-community/slider": "4.4.2",
     "expo": "^49.0.0",
+    "expo-av": "~13.4.1",
     "expo-status-bar": "~1.6.0",
     "firebase": "^10.7.1",
     "react": "18.2.0",
