@@ -15,9 +15,6 @@
     },
     "android": {
       "package": "com.farlove.app"
-    },
-    "web": {
-      "favicon": ""
     }
   }
 }
