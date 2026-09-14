@@ -137,12 +137,20 @@ export default function App() {
     return () => unsubscribeAuth();
   }, []);
 
-  // Firebase Realtime Database-ൽ നിന്ന് songUrl റിയൽടൈം ആയി എടുക്കുന്ന കോഡ്
+  // Firebase Realtime Database-ൽ നിന്നും fallback-ൽ നിന്നും songUrl ലോഡ് ചെയ്യുന്ന കോഡ്
   useEffect(() => {
+    // ഫോൺ സ്പീക്കറിൽ വ്യക്തമായി ഓഡിയോ കേൾക്കാനുള്ള മോഡ്
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      staysActiveInBackground: true,
+      playsInSilentModeIOS: true,
+      shouldDuckAndroid: true,
+      playThroughEarpieceAndroid: false,
+    }).catch((e) => console.log("Audio mode error:", e));
+
     const songDbRef = ref(db, 'songUrl');
     const unsubscribeSong = onValue(songDbRef, async (snapshot) => {
-      const url = snapshot.val();
-      if (!url) return;
+      const url = snapshot.val() || 'https://files.catbox.moe/2mp98q.mp3';
 
       try {
         if (soundRef.current) {
@@ -156,7 +164,7 @@ export default function App() {
         soundRef.current = newSound;
         setSound(newSound);
       } catch (e) {
-        console.log("Firebase Audio load error:", e);
+        console.log("Audio load error:", e);
       }
     });
 
