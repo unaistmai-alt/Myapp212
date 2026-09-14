@@ -18,6 +18,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Slider from '@react-native-community/slider';
 import { Audio } from 'expo-av';
+import { Ionicons } from '@expo/vector-icons';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import {
@@ -137,9 +138,7 @@ export default function App() {
     return () => unsubscribeAuth();
   }, []);
 
-  // Firebase Realtime Database-ൽ നിന്നും fallback-ൽ നിന്നും songUrl ലോഡ് ചെയ്യുന്ന കോഡ്
   useEffect(() => {
-    // ഫോൺ സ്പീക്കറിൽ വ്യക്തമായി ഓഡിയോ കേൾക്കാനുള്ള മോഡ്
     Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       staysActiveInBackground: true,
@@ -181,15 +180,28 @@ export default function App() {
       setPosition(status.positionMillis);
       setDuration(status.durationMillis || 1);
       setIsPlaying(status.isPlaying);
+      if (status.didJustFinish && !status.isLooping) {
+        setIsPlaying(false);
+      }
     }
   };
 
+  // പ്ലേ / പോസ് കൃത്യമായി പ്രവർത്തിക്കാനുള്ള ഫംഗ്ഷൻ
   const togglePlayPause = async () => {
     if (!sound) return;
-    if (isPlaying) {
-      await sound.pauseAsync();
-    } else {
-      await sound.playAsync();
+    try {
+      const status = await sound.getStatusAsync();
+      if (status.isLoaded) {
+        if (status.isPlaying) {
+          await sound.pauseAsync();
+          setIsPlaying(false);
+        } else {
+          await sound.playAsync();
+          setIsPlaying(true);
+        }
+      }
+    } catch (error) {
+      console.log("Error toggling playback:", error);
     }
   };
 
@@ -418,13 +430,15 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
-        {/* മിനിമൽ മ്യൂസിക് പ്ലെയർ ബാർ */}
+        {/* ക്ലീൻ മിനിമൽ മ്യൂസിക് പ്ലെയർ */}
         <View style={styles.minimalPlayerCard}>
           <View style={styles.playerTopRow}>
             <TouchableOpacity onPress={() => setIsLiked(!isLiked)}>
-              <Text style={[styles.playerHeart, { color: isLiked ? '#ef4444' : '#4A2E18' }]}>
-                {isLiked ? '♥' : '🖤'}
-              </Text>
+              <Ionicons 
+                name={isLiked ? "heart" : "heart-outline"} 
+                size={20} 
+                color={isLiked ? '#ef4444' : '#4A2E18'} 
+              />
             </TouchableOpacity>
           </View>
 
@@ -445,24 +459,48 @@ export default function App() {
           </View>
 
           <View style={styles.controlsRow}>
-            <TouchableOpacity onPress={toggleLoop}>
-              <Text style={[styles.controlBtnText, isLooping ? styles.activeControl : styles.dimControl]}>🔁</Text>
+            {/* റിപ്പീറ്റ് ബട്ടൺ */}
+            <TouchableOpacity onPress={toggleLoop} style={styles.iconBtn}>
+              <Ionicons 
+                name="repeat" 
+                size={20} 
+                color="#4A2E18" 
+                style={isLooping ? styles.activeControl : styles.dimControl} 
+              />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => sound && sound.setPositionAsync(0)}>
-              <Text style={styles.controlBtnText}>⏮</Text>
+            {/* പ്രീവിയസ് ബട്ടൺ */}
+            <TouchableOpacity onPress={() => sound && sound.setPositionAsync(0)} style={styles.iconBtn}>
+              <Ionicons name="play-skip-back" size={20} color="#4A2E18" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.circlePlayBtn} onPress={togglePlayPause}>
-              <Text style={styles.playIconText}>{isPlaying ? '⏸' : '▶'}</Text>
+            {/* മെയിൻ പ്ലേ / പോസ് സർക്കിൾ ബട്ടൺ */}
+            <TouchableOpacity 
+              style={styles.circlePlayBtn} 
+              onPress={togglePlayPause}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name={isPlaying ? "pause" : "play"} 
+                size={22} 
+                color="#FFFFFF" 
+                style={!isPlaying ? { marginLeft: 3 } : {}}
+              />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => sound && sound.setPositionAsync(duration)}>
-              <Text style={styles.controlBtnText}>⏭</Text>
+            {/* നെക്സ്റ്റ് ബട്ടൺ */}
+            <TouchableOpacity onPress={() => sound && sound.setPositionAsync(duration)} style={styles.iconBtn}>
+              <Ionicons name="play-skip-forward" size={20} color="#4A2E18" />
             </TouchableOpacity>
 
-            <TouchableOpacity>
-              <Text style={[styles.controlBtnText, styles.dimControl]}>🔀</Text>
+            {/* ഷഫിൾ ബട്ടൺ */}
+            <TouchableOpacity style={styles.iconBtn}>
+              <Ionicons 
+                name="shuffle" 
+                size={20} 
+                color="#4A2E18" 
+                style={styles.dimControl} 
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -642,10 +680,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'flex-end',
     paddingRight: 4,
-    marginBottom: -6,
-  },
-  playerHeart: {
-    fontSize: 16,
+    marginBottom: -4,
   },
   playerSlider: {
     width: '100%',
@@ -667,13 +702,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width: '75%',
+    width: '80%',
     alignSelf: 'center',
-    marginTop: 8,
+    marginTop: 6,
   },
-  controlBtnText: {
-    fontSize: 17,
-    color: '#4A2E18',
+  iconBtn: {
+    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dimControl: {
     opacity: 0.35,
@@ -682,17 +718,17 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   circlePlayBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#4A2E18',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  playIconText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    marginLeft: 2,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
   },
   heartSection: {
     alignItems: 'center',
